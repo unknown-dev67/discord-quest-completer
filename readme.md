@@ -2,6 +2,8 @@
 
 Automatically completes Discord quests for your account.
 
+> btw sometimes the code may fail; please try again.
+
 ## 1. Setup
 
 ```bash
