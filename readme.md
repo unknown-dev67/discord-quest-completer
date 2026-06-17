@@ -32,3 +32,7 @@ DISCORD_TOKEN=your_token python main.py
 - `ACHIEVEMENT_IN_ACTIVITY`
 
 > `STREAM_ON_DESKTOP` is not supported — complete those manually in the Discord app.
+
+## Credits
+
+Based on [Discord-Quest-Auto-Completion-Selfbot](https://github.com/aiko-chan-ai/Discord-Quest-Auto-Completion-Selfbot) by [aiko-chan-ai](https://github.com/aiko-chan-ai).
