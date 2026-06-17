@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import threading
 
 import src.build as build
 import src.rest as rest
@@ -15,6 +16,27 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
+def run_quest(token, quest):
+    qname = quests.quest_config(quest)["messages"]["quest_name"]
+    if not quests.quest_is_enrolled(quest):
+        is_android = (
+            "WATCH_VIDEO_ON_MOBILE" in quests.quest_config(quest)["task_config_v2"]["tasks"]
+            and "WATCH_VIDEO" not in quests.quest_config(quest)["task_config_v2"]["tasks"]
+        )
+        try:
+            quests.accept_quest(token, quest, is_android)
+        except Exception as e:
+            log.error("Failed to enroll in '%s': %s", qname, e)
+            return
+    else:
+        log.info("Already enrolled in '%s'.", qname)
+
+    try:
+        tasks.run_task(token, quest)
+    except Exception as e:
+        log.error("Error completing quest '%s': %s", qname, e)
+
+
 def auto_completer(token):
     build.update_build_number()
 
@@ -24,25 +46,11 @@ def auto_completer(token):
     todo = quests.filter_todo(all_quests)
     log.info("Found %d quest(s) to complete.", len(todo))
 
-    for quest in todo:
-        qname = quests.quest_config(quest)["messages"]["quest_name"]
-        if not quests.quest_is_enrolled(quest):
-            is_android = (
-                "WATCH_VIDEO_ON_MOBILE" in quests.quest_config(quest)["task_config_v2"]["tasks"]
-                and "WATCH_VIDEO" not in quests.quest_config(quest)["task_config_v2"]["tasks"]
-            )
-            try:
-                quests.accept_quest(token, quest, is_android)
-            except Exception as e:
-                log.error("Failed to enroll in '%s': %s", qname, e)
-                continue
-        else:
-            log.info("Already enrolled in '%s'.", qname)
-
-        try:
-            tasks.run_task(token, quest)
-        except Exception as e:
-            log.error("Error completing quest '%s': %s", qname, e)
+    threads = [threading.Thread(target=run_quest, args=(token, quest)) for quest in todo]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
     log.info("All done.")
 

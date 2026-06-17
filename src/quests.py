@@ -4,9 +4,6 @@ import src.rest as rest
 
 log = logging.getLogger(__name__)
 
-
-# ---------- Quest dict accessors ----------
-
 def quest_id(quest):
     return quest["id"]
 
@@ -39,8 +36,6 @@ def quest_update_status(quest, new_status):
     quest["user_status"] = new_status
 
 
-# ---------- Fetch ----------
-
 def fetch_quests(token):
     resp = rest.get(token, "/quests/@me")
     blocked = resp.get("quest_enrollment_blocked_until")
@@ -54,8 +49,6 @@ def fetch_quests(token):
 def filter_todo(quests):
     return [q for q in quests if not quest_is_completed(q) and not quest_is_expired(q)]
 
-
-# ---------- Enroll ----------
 
 def accept_quest(token, quest, is_android=False):
     qname = quest_config(quest)["messages"]["quest_name"]

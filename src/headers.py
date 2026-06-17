@@ -3,7 +3,6 @@ import base64
 
 from src.constants import USER_AGENT, ANDROID_USER_AGENT, desktop_properties, android_properties
 
-# module-level build number, updated by build.py
 _build_number = 539951
 
 
