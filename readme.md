@@ -2,7 +2,7 @@
 
 Automatically completes Discord quests for your account.
 
-> btw sometimes the code may fail; please try again.
+> btw sometimes the code may fail, please try again. Use at your own risk — excessive use may result in your Discord account being banned.
 
 ## 1. Setup
 
