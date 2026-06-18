@@ -17,7 +17,6 @@ pip install -r requirements.txt
 Go to F12 or DevTools and console, and put this commands
 - allow pasting
 - (()=>{for(let e of Object.values(webpackChunkdiscord_app.push([[Symbol()],{},e=>e.c])))try{if(!e.exports||e.exports===window)continue;if(e.exports?.getToken)return e.exports.getToken();for(let t in e.exports)if(e.exports?.[t]?.getToken&&"IntlMessagesProxy"!==e.exports[t][Symbol.toStringTag])return e.exports[t].getToken()}catch{}})();
-- btw remove ""
 ## 3. Usage
 
 ```bash
