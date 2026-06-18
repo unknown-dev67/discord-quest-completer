@@ -84,7 +84,7 @@ def do_play_on_platform(token, quest, seconds_needed, task_name):
 
 def do_play_activity(token, quest, seconds_needed, task_name):
     qname = quest_config(quest)["messages"]["quest_name"]
-    stream_key = "call:1:1"  # todo: dynamic
+    stream_key = "call:1:1"
     interval = 20
     log.info("Spoofing activity play for '%s'...", qname)
     while not quest_is_completed(quest):
