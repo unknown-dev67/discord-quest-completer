@@ -6,7 +6,7 @@ from datetime import datetime
 
 import requests
 
-import src.rest as rest
+import rest
 from src.headers import make_desktop_headers, get_activity_headers
 from src.quests import quest_id, quest_config, quest_user_status, quest_is_completed, quest_update_status
 
@@ -60,12 +60,19 @@ def do_play_on_platform(token, quest, seconds_needed, task_name):
         seconds_done = quest_user_status(quest).get("progress", {}).get(task_name, {}).get("value", 0)
         remaining = max(0, seconds_needed - seconds_done)
         log.info("Progress: %ds done, ~%d min remaining.", seconds_done, int(remaining / 60))
-        resp = rest.post(
-            token,
-            f"/quests/{quest_id(quest)}/heartbeat",
-            body={"application_id": application_id, "terminal": False},
-        )
-        quest_update_status(quest, resp)
+        try:
+            resp = rest.post(
+                token,
+                f"/quests/{quest_id(quest)}/heartbeat",
+                body={"application_id": application_id, "terminal": False},
+            )
+            quest_update_status(quest, resp)
+        except Exception as e:
+            if "500" in str(e):
+                log.warning("Discord having issues (500), retrying in 10s...")
+                time.sleep(10)
+                continue
+            raise
         time.sleep(interval)
     rest.post(
         token,
@@ -77,19 +84,26 @@ def do_play_on_platform(token, quest, seconds_needed, task_name):
 
 def do_play_activity(token, quest, seconds_needed, task_name):
     qname = quest_config(quest)["messages"]["quest_name"]
-    stream_key = "call:1:1"
+    stream_key = "call:1:1"  # todo: dynamic
     interval = 20
     log.info("Spoofing activity play for '%s'...", qname)
     while not quest_is_completed(quest):
         seconds_done = quest_user_status(quest).get("progress", {}).get(task_name, {}).get("value", 0)
         remaining = max(0, seconds_needed - seconds_done)
         log.info("Progress: %ds done, ~%d min remaining.", seconds_done, int(remaining / 60))
-        resp = rest.post(
-            token,
-            f"/quests/{quest_id(quest)}/heartbeat",
-            body={"stream_key": stream_key, "terminal": False},
-        )
-        quest_update_status(quest, resp)
+        try:
+            resp = rest.post(
+                token,
+                f"/quests/{quest_id(quest)}/heartbeat",
+                body={"stream_key": stream_key, "terminal": False},
+            )
+            quest_update_status(quest, resp)
+        except Exception as e:
+            if "500" in str(e):
+                log.warning("Discord 500 error, retrying in 10s...")
+                time.sleep(10)
+                continue
+            raise
         time.sleep(interval)
     rest.post(token, f"/quests/{quest_id(quest)}/heartbeat", body={"stream_key": stream_key, "terminal": True})
     log.info("Quest '%s' completed!", qname)
@@ -163,16 +177,19 @@ def do_achievement_in_activity(token, quest):
         log.error("No auth code received for '%s'. Cannot complete.", application_name)
         return
 
+    # 2. Discord Says auth
     ds_token, error, activity_referrer = _authorize_discord_says(token, application_id, quest_id(quest), auth_code)
     if error or not ds_token:
         log.error("Failed to authorize Discord Says for '%s': %s", qname, error)
         return
 
+    # 3. Progress
     success, err = _progress_discord_says(application_id, quest_id(quest), ds_token, quest_target, activity_referrer)
     if not success:
         log.error("Failed to progress quest '%s': %s", qname, err)
         return
 
+    # 4. Deauthorize
     tokens = rest.get(token, "/oauth2/tokens")
     for t in tokens:
         if t.get("application", {}).get("id") == application_id:
